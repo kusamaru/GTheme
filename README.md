@@ -1,14 +1,20 @@
-# GenericTheme
+# GTheme
 Play skin(7K/5K) for beatoraja made by lua.
 
-## Download
-[Here](https://github.com/Shimi9999/GenericTheme/archive/refs/heads/master.zip)
+## TODO
+- [] Replace screenshots
+- [] Wide view support
 
+## Download
+[Here](https://github.com/kusamaru/GTheme/archive/refs/heads/master.zip)
+
+<!-- 
 ## Screenshots
 default
 ![play_default](/screenshot/play_default.png?raw=true)  
 customize
-![play_customize](/screenshot/play_customize.png?raw=true)
+![play_customize](/screenshot/play_customize.png?raw=true) 
+-->
 
 ## Support
 beatoraja 0.8.5 and later versions
