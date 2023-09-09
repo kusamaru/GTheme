@@ -1,3 +1,5 @@
+local utils = require("utils")
+
 local function append_all(list, list1)
 	for _, v in ipairs(list1) do
 		table.insert(list, v)
@@ -39,7 +41,7 @@ local property = {
 			_2p = {name = "2P", op = 901},
 		}
 	},
-	stratchSide = {
+	scratchSide = {
 		name = "Scratch Side",
 		item = {
 			default = {name = "Default", op = 902},
@@ -193,10 +195,28 @@ local property = {
 			on = {name = "On", op = 968},
 		}
 	},
+
+    -- ここから追加項目
+    keybeamLength = {
+        name = "Keybeam Length",
+        item = {
+            none = {name = "None(0%)", op = 969},
+            veryshort = {name = "Very Short(30%)", op = 970},
+            short = {name = "Short(60%)", op = 971},
+            normal = {name = "Normal(100%)", op = 972},
+        }
+    },
+    hideLoadingImage = {
+        name = "Hide Loading Image",
+        item = {
+            off = {name = "Off", op = 973},
+            on = {name = "On", op = 974},
+        }
+    }
 }
 local property_order = {
 	"playSide",
-	"stratchSide",
+	"scratchSide",
 	"scoreGraph",
 	"scoreGraphPosition",
 	"scoreGraphLowerArea",
@@ -214,7 +234,9 @@ local property_order = {
 	"laneCentering",
 	"absolutePositioning",
 	"hideFrames",
-	"total"
+	"total",
+    "keybeamLength",
+    "hideLoadingImage",
 }
 -- 全itemに、そのオプションが選択中か返すisSelected()をセットする
 for property_key, property_value in pairs(property) do
@@ -245,12 +267,12 @@ local function is2P()
 	return property.playSide.item._2p.isSelected()
 end
 local function isLeftScratch()
-	return property.stratchSide.item.left.isSelected() or
-		(property.playSide.item._1p.isSelected() and not property.stratchSide.item.right.isSelected())
+	return property.scratchSide.item.left.isSelected() or
+		(property.playSide.item._1p.isSelected() and not property.scratchSide.item.right.isSelected())
 end
 local function isRightScratch()
-	return property.stratchSide.item.right.isSelected() or
-		(property.playSide.item._2p.isSelected() and not property.stratchSide.item.left.isSelected())
+	return property.scratchSide.item.right.isSelected() or
+		(property.playSide.item._2p.isSelected() and not property.scratchSide.item.left.isSelected())
 end
 local function isScoreGraph()
 	return not property.scoreGraph.item.off.isSelected()
@@ -302,6 +324,18 @@ local function isScoregraph2P()
 	return not isScoregraph1P()
 end
 
+local function getKeybeamMultiplier()
+    local multiplier = 0.0
+    if property.keybeamLength.item.veryshort.isSelected() then
+        multiplier = 0.3
+    elseif property.keybeamLength.item.short.isSelected() then
+        multiplier = 0.6
+    elseif property.keybeamLength.item.normal.isSelected() then
+        multiplier = 1.0
+    end
+    return multiplier
+end
+
 local filepath = {
 	{name = "Background", path = "customize/background/*.png", def = "gray"},
 	{name = "Failed", path = "customize/failed/*.png", def = "black"},
@@ -340,7 +374,7 @@ local offset_source = {
 
 local header = {
 	type = 0,
-	name = "GenericTheme",
+	name = "GTheme",
 	w = 1920,
 	h = 1080,
 	loadend = 3000,
@@ -389,17 +423,17 @@ local function main(keysNumber)
 
 	-- note geometry
 	geo.note = {}
-	geo.note.original_white_w = 60
-	geo.note.original_black_w = 48
-	geo.note.original_scratch_w = 108
+	geo.note.original_white_w = 52 -- wide: 60
+	geo.note.original_black_w = 40 -- wide: 48
+	geo.note.original_scratch_w = 90 -- wide: 108
 	geo.note.scale_w = 1 + offset.lane_width.w / 100
 	geo.note.white_w = geo.note.original_white_w * geo.note.scale_w
 	geo.note.black_w = geo.note.original_black_w * geo.note.scale_w
 	geo.note.scratch_w = geo.note.original_scratch_w * geo.note.scale_w
 
-	-- lane and lanearea geometry
-	geo.lanearea = {}
-	geo.lanearea.padding_left = 54
+	-- lane and lanea+rea geometry
+	geo. lanearea = {}
+	geo.lanearea.padding_left = 75
 	geo.lanearea.padding_right = 14
 	if is2P() then
 		geo.lanearea.padding_left, geo.lanearea.padding_right = geo.lanearea.padding_right, geo.lanearea.padding_left
@@ -407,7 +441,7 @@ local function main(keysNumber)
 
 	geo.lane = {}
 	geo.lane.separateline_w = 3
-	geo.lane.y = 226
+	geo.lane.y = 345
 	geo.lane.h = header.h - geo.lane.y
 	geo.lane.fivekeycover_w = geo.note.white_w + geo.note.black_w + geo.lane.separateline_w * 2
 	geo.lane.judgeline_h = 10
@@ -468,15 +502,15 @@ local function main(keysNumber)
 	geo.scoregrapharea.w = 0
 	if isScoreGraph() then
 		geo.scoregraph = {}
-		geo.scoregraph.bar_original_w = 58
+		geo.scoregraph.bar_original_w = 75
 		if isScoreGraphNormal() then
 			geo.scoregraph.bar_w = geo.scoregraph.bar_original_w
 		else
 			geo.scoregraph.bar_w = 28
 		end
 		geo.scoregraph.bar_w = geo.scoregraph.bar_w + offset.scoregraph.w
-		geo.scoregraph.bar_h = 740
-		geo.scoregraph.bar_space = 4
+		geo.scoregraph.bar_h = 660
+		geo.scoregraph.bar_space = 10
 		geo.scoregraph.w = geo.scoregraph.bar_w * 4 + geo.scoregraph.bar_space * 3
 		geo.scoregraph.original_w = geo.scoregraph.bar_original_w * 4 + geo.scoregraph.bar_space * 3
 		geo.scoregraph.h = geo.scoregraph.bar_h + 20
@@ -572,13 +606,13 @@ local function main(keysNumber)
 	geo.bga = {}
 	geo.bga.frame_w = 10
 	geo.bga.frame_h = 8
-	geo.bga.w = 1152
+	geo.bga.w = 1105 -- TODO: magic number
 	if geo.bgaarea.w < geo.bga.w + geo.bga.frame_w * 2 then
 		geo.bga.w = geo.bgaarea.w - geo.bga.frame_w * 2
 	end
-	geo.bga.h = 864
+	geo.bga.h = 834 -- 864
 	geo.bga.x = geo.bgaarea.center_x - geo.bga.w / 2
-	geo.bga.y = 108
+	geo.bga.y = 108 + 15
 	geo.bga.center_x = geo.bga.x + geo.bga.w / 2
 	geo.bga.center_y = geo.bga.y + geo.bga.h / 2
 
@@ -1251,7 +1285,7 @@ local function main(keysNumber)
 
 		-- bga
 		do
-			local bga_a = 255 + offset.bga.a
+			local bga_a = 255 - offset.bga.a
 
 			-- frame
 			if property.hideFrames.item.off.isSelected() and property.fullscreenBga.item.off.isSelected() then
@@ -1399,20 +1433,20 @@ local function main(keysNumber)
 		local header_x = geo.bga.x - geo.bga.frame_w + offset.bga_header.x - offset.bga_header.w / 2
 		local header_w = geo.bga.w + geo.bga.frame_w * 2 + offset.bga_header.w
 		local header_center_x = header_x + header_w / 2
-		local header_y = geo.bga.y + geo.bga.h + geo.bga.frame_h
+		local header_y = geo.bga.y + geo.bga.h + geo.bga.frame_h + 10
 		local header_h = header.h - header_y
 
 		-- background black
 		do
 			local w = geo.bgaarea.w + 20 -- 20でlaneとscoragraphまでの隙間を埋める
 			local x = header_center_x - w / 2
-			local y = header_y
-			local h = header_h
+			local y = header_y - 10
+			local h = header_h + 10
 			table.insert(skin.destination,
-				{id = -110, dst = {
+                {id = -110, dst = {
 					{x = x, y = y, w = w, h = h, a = 200 + offset.bga_header.a}
 				}}
-			)
+            )
 		end
 
 		-- title & artist(table)
@@ -1420,39 +1454,40 @@ local function main(keysNumber)
 			{id = "titlegradation_header", src = "src_titlegradation_header", x = 0, y = 0, w = -1, h = -1}
 		)
 
-		local title_size = 33 local artist_size = 26
+		local title_size = 33 local artist_size = 24
 		append_all(skin.text, {
 			{id = "header_title", font = "genshin_bold", size = title_size, align = 1, overflow = 1, ref = 12},
 			{id = "header_artist", font = "genshin_bold", size = artist_size, align = 1, overflow = 1, ref = 16},
 			{id = "header_table", font = "genshin_bold", size = artist_size, align = 1, overflow = 1, ref = 1003},
 		})
 
-		local header_title_y = header_y + 15
+		local header_title_y = header_y
 		local header_side_w = 168 -- level, difficulty, stageのぶんの幅
 		local header_title_w = header_w - header_side_w * 2
 		append_all(skin.destination, {
 			{id = "header_title", filter = 1, dst = {
-				{x = header_center_x, y = header_title_y + artist_size + 4, w = header_title_w, h = title_size}
+				{x = header_center_x, y = header_title_y + artist_size - 2, w = header_title_w, h = title_size}
 			}},
 			{id = "header_artist", filter = 1, op = {-1008}, dst = {
-				{x = header_center_x, y = header_title_y - 4, w = header_title_w, h = artist_size}
+				{x = header_center_x, y = header_title_y - 10, w = header_title_w, h = artist_size}
 			}},
 			-- artist & table lotate animation
 			{id = "header_artist", filter = 1, op = {1008}, dst = {
-				{time = 0, x = header_center_x, y = header_title_y - 4, w = header_title_w, h = artist_size, a = 255},
-				{time = 4000, a = 255},
-				{time = 6000, a = 0},
-				{time = 14000, a = 0},
-				{time = 16000, a = 255}
+				{time = 0, x = header_center_x, y = header_title_y - 10, w = header_title_w, h = artist_size, a = 255},
+				-- {time = 4000, a = 255},
+				-- {time = 6000, a = 0},
+				-- {time = 14000, a = 0},
+				-- {time = 16000, a = 255}
 			}},
-			{id = "header_table", filter = 1, op = {1008}, dst = {
-				{time = 0, x = header_center_x, y = header_title_y - 4, w = header_title_w, h = artist_size, a = 0, r = 229, g = 153, b = 255},
-				{time = 6000, a = 0},
-				{time = 8000, a = 255},
-				{time = 12000, a = 255},
-				{time = 14000, a = 0},
-				{time = 16000, a = 0}
-			}},
+			-- {id = "header_table", filter = 1, op = {1008}, dst = {
+			-- 	{time = 0, x = header_center_x, y = header_title_y - 4, w = header_title_w, h = artist_size, a = 0, r = 229, g = 153, b = 255},
+			-- 	{time = 6000, a = 0},
+			-- 	{time = 8000, a = 255},
+			-- 	{time = 12000, a = 255},
+			-- 	{time = 14000, a = 0},
+			-- 	{time = 16000, a = 0}
+			-- }},
+            
 			-- title gradation
 			-- artistの後に描画するとartistが黒箱にならない
 			{id = "titlegradation_header", blend = 4, dst = {
@@ -1494,22 +1529,49 @@ local function main(keysNumber)
 				table.insert(skin.value,
 					number({id = "level", src = "src_number_newtown", divx = 10, digit = 2, align = 1, ref = 96})
 				)
+                table.insert(skin.text, 
+                    {id = "difficulty_table", font = "genshin_bold", size = 24, align = 0, ref = 1002}
+                )
 			end
-			local y = header_title_y + 3 local h = 18 local text_w = 38 local num_w = 23 local space_x = 4
+
+			local y = header_title_y + 3 local h = 18 local text_w = 36 local num_w = 23 local space_x = 4
 			local x = difficulty_x + (difficulty_w - (text_w + num_w + space_x)) / 2
-			-- 中央寄せになるようにレベルの桁によって位置を調整
-			if main_state.number(96) >= 10 then
-				x = x - num_w / 2
-			end
-			append_all(skin.destination, {
-				-- playlevel
-				{id = "text_image_lv", filter = 1, dst = {
-					{x = x, y = y, w = text_w, h = h}
-				}},
-				{id = "level", filter = 1, dst = {
-					{x = x + text_w + space_x, y = y, w = num_w, h = h}
-				}},
-			})
+
+            if main_state.text(1002) == nil or main_state.text(1002) == "" then
+                -- 中央寄せになるようにレベルの桁によって位置を調整
+                if main_state.number(96) >= 10 then
+                    x = x - num_w / 2
+                end
+                -- BMSファイルの難易度
+			    append_all(skin.destination, {
+                    -- playlevel
+                    {id = "text_image_lv", filter = 1, dst = {
+                        {x = x, y = y, w = text_w, h = h}
+                    }},
+                    {id = "level", filter = 1, dst = {
+                        {x = x + text_w + space_x, y = y, w = num_w, h = h}
+                    }},
+			    })
+            else
+                local level_offset = 11 -- なんか11くらいでちょうどいい。
+                
+                -- local level_text = main_state.text(1002)
+                -- if type(level_text) == "string" then
+                --     -- Luaではバイトを数えるので2バイト文字=2としてカウントされる
+                --     -- length = string.len(level_text)
+                --     local sb_cnt, mb_cnt = utils.cntCharactersByMultibyte(level_text)
+                -- end
+
+                -- サイズの調整
+                x = x + level_offset
+                h = h + 2
+                -- 難易度表の難易度
+                table.insert(skin.destination, 
+                    {id = "difficulty_table", filter = 1, dst = {
+                        {x = x, y = y, w = text_w, h = h}
+                    }}
+                )
+            end
 		end
 		-- stage
 		do
@@ -1524,12 +1586,12 @@ local function main(keysNumber)
 			})
 
 			local w = 147 local h = img_h * w / img_w
-			local x = header_x + header_w - w - margin_outside_x
-			if isBgaArea2P() then
-				x = header_x + margin_outside_x
-			end
-			local y = header_title_y + 25
-			local stage_id = "stage_beatoraja"
+			local x = header_center_x - w / 2 -- header_x + header_w - w - margin_outside_x
+			-- if isBgaArea2P() then
+			-- 	x = header_x + margin_outside_x
+			-- end
+			local y = header_title_y + title_size + artist_size + 15
+			local stage_id = "stage_extra"
 			-- course stages
 			if main_state.option(290) then
 				if main_state.option(280) then
@@ -1544,7 +1606,7 @@ local function main(keysNumber)
 					stage_id = "stage_extra"
 				end
 			end
-			table.insert(skin.destination,
+			table.insert(skin.destination, 
 				{id = stage_id, filter = 1, dst = {
 					{time = 0, x = x, y = y, w = w, h = h},
 					{time = 3000, a = 255},
@@ -1620,7 +1682,7 @@ local function main(keysNumber)
 		x = x + offset.playinfo.x
 		y = y + offset.playinfo.y
 		--w = w + offset.playinfo.w
-		a = 255 + offset.playinfo.a
+		local a = 255 + offset.playinfo.a
 		local p_dst = playinfo_dst(x, y, w, a, property.playInfo.item.slim.isSelected(), {timer = timer})
 		append_all(skin.destination, p_dst)
 
@@ -1643,7 +1705,7 @@ local function main(keysNumber)
 		-- background
 		do
 			table.insert(skin.image,
-				{id = "scoregraph_background", src = "src_scoregraph_background", x = 0, y = 0, w = -1, h = -1}
+				{id = "scoregraph_background", src = "src_scoregraph_background", x = geo.scoregraph.x, y = geo.scoregraph.y, w = geo.scoregraph.w, h = geo.scoregraph.h}
 			)
 			table.insert(skin.destination,
 				{id = "scoregraph_background", dst = {
@@ -1732,7 +1794,8 @@ local function main(keysNumber)
 				{id = "graph_target", src = "src_white1dot", x = 0, y = 0, w = 1, h = 1, type = 114},
 				{id = "graph_target_final", src = "src_white1dot", x = 0, y = 0, w = 1, h = 1, type = 115},
 			})
-
+ 
+            local bar_offset = 30
 			local bar_now_x = geo.scoregraph.x + geo.scoregraph.bar_w
 			local bar_best_x = geo.scoregraph.x + geo.scoregraph.bar_w * 2 + geo.scoregraph.bar_space
 			local bar_target_x = geo.scoregraph.x + geo.scoregraph.bar_w * 3 + geo.scoregraph.bar_space * 2
@@ -1778,9 +1841,9 @@ local function main(keysNumber)
 				diff_src = "src_number_genshin_monospace_border_red"
 			end
 			append_all(skin.value, {
-				number({id = "diff_best", src = diff_src, divx = 12, divy = 2, digit = 5, ref = 152}),
-				number({id = "diff_target", src = diff_src, divx = 12, divy = 2, digit = 5, ref = 153}),
-				number({id = "diff_nextrank", src = diff_src, divx = 10, divy = 1, digit = 4, ref = 154}),
+				number({id = "diff_best", src = diff_src, divx = 12, divy = 2, digit = 5, zeropadding = 1, ref = 152}),
+				number({id = "diff_target", src = diff_src, divx = 12, divy = 2, digit = 5, zeropadding = 1, ref = 153}),
+				number({id = "diff_nextrank", src = diff_src, divx = 10, divy = 1, digit = 4, zeropadding = 1, ref = 154}),
 
 				number({id = "scorerate", src = "src_number_genshin_monospace_border", divx = 10, digit = 3, ref = 102}),
 				number({id = "scorerate_ad", src = "src_number_genshin_monospace_border", divx = 10, digit = 2, padding = 1, ref = 103})
@@ -1907,39 +1970,112 @@ local function main(keysNumber)
 		-- header scores
 		do
 			append_all(skin.value, {
-				number({id = "mybest_exscore", src = "src_number_newtown", divx = 10, digit = 5, ref = 150}),
-				number({id = "target_exscore", src = "src_number_newtown", divx = 10, digit = 5, ref = 121})
+                number({id = "you_exscore", src = "src_number_newtown", divx = 11, digit = 4, zeropadding = 1, padding = 1, ref = 71}),
+				number({id = "mybest_exscore", src = "src_number_newtown", divx = 11, digit = 4, padding = 1, ref = 150}),
+				number({id = "target_exscore", src = "src_number_newtown", divx = 11, digit = 4, padding = 1, ref = 121})
 			})
 
 			local text_size = 18
 			append_all(skin.text, {
+                {id = "text_scoregraph_you", font = "newtown", size = text_size, constantText = "YOU"},
 				{id = "text_scoregraph_mybest", font = "newtown", size = text_size, constantText = "MYBEST"},
 				{id = "text_scoregraph_target", font = "newtown", size = text_size, constantText = "TARGET"},
 			})
 
-			local num_size = 20
-			local num_x = geo.scoregraph.x + geo.scoregraph.w - num_size * 5 - 4
-			local text_x = geo.scoregraph.x + 4
-			local base_y = geo.scoregraph.y + geo.scoregraph.h + 6
+			local num_size = 24
+			local num_x = geo.scoregraph.x + geo.scoregraph.w - num_size * 4 - 10
+			local text_x = geo.scoregraph.x + 10
+			local base_y = geo.scoregraph.y + geo.scoregraph.h + 8
+            local line_h = 1
+            local space_graph = 6
+            local space_score = 20
 
-			local target_color = {r = 255, g = 200, b = 200}
-			local mybest_color = {r = 200, g = 255, b = 200}
+            local you_color = {r = 170, g = 170, b = 255}
+			local target_color = {r = 255, g = 170, b = 170}
+			local mybest_color = {r = 170, g = 255, b = 170}
+            local line_color = {r = 235, g = 208, b = 180}
 			append_all(skin.destination, {
 				{id = -110, dst = { -- background
-					{x = geo.scoregraph.x, y = base_y, w = geo.scoregraph.w, h = header.h - base_y, a = 255 + offset.scoregraph.a}
+					{x = geo.scoregraph.x, y = base_y - 4, w = geo.scoregraph.w, h = header.h - base_y, a = 255 + offset.scoregraph.a}
 				}},
+
+                -- current score
+                {id = "text_scoregraph_you", filter = 1, dst = {
+					merge_all({
+                        x = text_x, 
+                        y = base_y + num_size * 2 + line_h * 6 + space_graph * 3 + space_score * 2, 
+                        w = text_size, 
+                        h = text_size
+                    }, you_color)
+				}},
+				{id = "you_exscore", filter = 1, dst = {
+					merge_all({
+                        x = num_x, 
+                        y = base_y + num_size * 2 + line_h * 6 + space_graph * 3 + space_score * 2, 
+                        w = num_size, 
+                        h = num_size
+                    }, you_color)
+				}},
+                {id = -111, dst = {
+                    merge_all({
+                        x = geo.scoregraph.x + 8, 
+                        y = base_y + num_size * 2 + line_h * 4 + space_graph * 2 + space_score * 2 - 1, 
+                        w = geo.scoregraph.w - 16, 
+                        h = line_h
+                    }, line_color)
+                }},
+
+                -- target score
 				{id = "text_scoregraph_target", filter = 1, dst = {
-					merge_all({x = text_x, y = base_y + num_size * 2 + text_size + 2 + 4 + 2, w = text_size, h = text_size}, target_color)
+					merge_all({
+                        x = text_x, 
+                        y = base_y + num_size + line_h * 4 + space_graph * 2 + space_score, 
+                        w = text_size, 
+                        h = text_size
+                    }, target_color)
 				}},
 				{id = "target_exscore", filter = 1, dst = {
-					merge_all({x = num_x, y = base_y + num_size + text_size + 2 + 4, w = num_size, h = num_size}, target_color)
+					merge_all({
+                        x = num_x, 
+                        y = base_y + num_size + line_h * 4 + space_graph * 2 + space_score, 
+                        w = num_size, 
+                        h = num_size
+                    }, target_color)
 				}},
+                {id = -111, dst = {
+                    merge_all({
+                        x = geo.scoregraph.x + 8, 
+                        y = base_y + num_size + line_h * 2 + space_graph + space_score, 
+                        w = geo.scoregraph.w - 16, 
+                        h = line_h
+                    }, line_color)
+                }},
+
+                -- mybest score
 				{id = "text_scoregraph_mybest", filter = 1, dst = {
-					merge_all({x = text_x, y = base_y + num_size + 2, w = text_size, h = text_size}, mybest_color)
+					merge_all({
+                        x = text_x, 
+                        y = base_y + line_h * 2 + space_graph, 
+                        w = text_size, 
+                        h = text_size
+                    }, mybest_color)
 				}},
 				{id = "mybest_exscore", filter = 1, dst = {
-					merge_all({x = num_x, y = base_y, w = num_size, h = num_size}, mybest_color)
+					merge_all({
+                        x = num_x, 
+                        y = base_y + line_h * 2 + space_graph, 
+                        w = num_size, 
+                        h = num_size
+                    }, mybest_color)
 				}},
+                {id = -111, dst = {
+                    merge_all({
+                        x = geo.scoregraph.x + 8, 
+                        y = base_y + 1, 
+                        w = geo.scoregraph.w - 16, 
+                        h = line_h
+                    }, line_color)
+                }},
 			})
 		end
 
@@ -2031,9 +2167,9 @@ local function main(keysNumber)
 		table.insert(skin.slider,
 			{id = "musicprogress", src = "src_progress", x = 0, y = 0, w = w, h = slider_h, angle = 2, range = geo.lane.h - slider_h - 30 * 2, type = 6}
 		)
-		local margin_y = 34
+		local margin_y = 36
 		local bar_h = geo.lane.h - margin_y * 2
-		local x = geo.lanearea.x + 24
+		local x = geo.lanearea.x + 45
 		if is2P() then
 			x = geo.lanearea.x + geo.lanearea.w - 24 - w
 		end
@@ -2133,7 +2269,7 @@ local function main(keysNumber)
 			kind = {"w", "b", "w", "b", "w", "s"}
 			timer = {101, 102, 103, 104, 105, 100}
 		end
-		local h = geo.lane.h / 2 + offset.keybeam.h
+		local h = math.floor((geo.lane.h / 2 + offset.keybeam.h) * getKeybeamMultiplier())
 		local a = 255 + offset.keybeam.a
 		-- push
 		do
@@ -2145,7 +2281,7 @@ local function main(keysNumber)
 				})
 			end
 			-- スクラッチのキービームのみ伸びるアニメーションをする(オートプレイではオフ)
-			local scratch_ontime = 40
+			local scratch_ontime = 20
 			table.insert(skin.destination, {
 				id = "keybeam_s", offset = 3, timer = timer[keysNumber + 1], op = {32}, brend = 1, loop = scratch_ontime, dst = {
 					{time = 0, x = geo.lane.each_x[keysNumber + 1], y = geo.lane.y, w = geo.lane.each_w[keysNumber + 1], h = 0, a = a},
@@ -2384,15 +2520,14 @@ local function main(keysNumber)
 				src = "src_number_genshin_monospace_border_red"
 			end
 			append_all(skin.value, {
-				number({id = "ghostscore", src = src, divx = 12, divy = 2, digit = digit, align = align, ref = ref}),
+				number({id = "ghostscore", src = src, divx = 12, divy = 2, digit = digit, align = align, zeropadding = 1, ref = ref}),
 			})
 
 			local total_w = num_w * digit
 			local x, y = position(total_w, false)
 			append_all(skin.destination, {
-				{id = "ghostscore", offsets = {3, 33}, op = {32}, loop = -1, timer = 46, filter = 1, dst = {
-					{time = 0, x = x, y = y, w = num_w, h = h},
-					{time = display_time}
+				{id = "ghostscore", offsets = {3}, op = {32}, dst = {
+					{x = x, y = y, w = num_w, h = h}
 				}},
 			})
 		end
@@ -2421,16 +2556,6 @@ local function main(keysNumber)
 		local stagefile_x = geo.lane.center_x - stagefile_w / 2 local stagefile_y = y + graph_h + space_h
 		local frame_w = 5 local frame_h = 5
 		local dst = {
-			-- stagefile
-			{id = -110, op = {80}, dst = {
-				{x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
-			}},
-			{id = -100, op = {80, 191}, stretch = 1, dst = {
-				{x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
-			}},
-			{id = "stagefile_default", op = {80, 190}, stretch = 1, dst = {
-				{x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
-			}},
 			-- loading progress
 			{id = -110, op = {80}, dst = {
 				{x = stagefile_x, y = y, w = stagefile_w, h = graph_h},
@@ -2444,12 +2569,28 @@ local function main(keysNumber)
 			{id = "graph_loading_progress", op = {80}, blend = 9, dst = {
 				{x = stagefile_x, y = y, w = stagefile_w, h = graph_h, r = 220, g = 220, b = 220},
 			}},
-			-- stagefileとprogressの間のスペースの穴埋め
-			{id = -111, op = {80}, dst = {
-				{x = stagefile_x, y = y + graph_h, w = stagefile_w, h = space_h, r = 100, g = 100, b = 100},
-			}},
 		}
-		dst = merge_all(dst, frame_dst(stagefile_x, y, stagefile_w, stagefile_h + graph_h + space_h, 255, frame_w, frame_h, {op = {80}}))
+        if property.hideLoadingImage.item.off.isSelected() then
+            dst = merge_all(dst, {
+                -- stagefile
+                {id = -110, op = {80}, dst = {
+                    {x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
+                }},
+                {id = -100, op = {80, 191}, stretch = 1, dst = {
+                    {x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
+                }},
+                {id = "stagefile_default", op = {80, 190}, stretch = 1, dst = {
+                    {x = stagefile_x, y = stagefile_y, w = stagefile_w, h = stagefile_h},
+                }},
+                -- stagefileとprogressの間のスペースの穴埋め
+                {id = -111, op = {80}, dst = {
+                    {x = stagefile_x, y = y + graph_h, w = stagefile_w, h = space_h, r = 100, g = 100, b = 100},
+                }},
+            })
+            dst = merge_all(dst, frame_dst(stagefile_x, y, stagefile_w, stagefile_h + graph_h + space_h, 255, frame_w, frame_h, {op = {80}}))
+        else
+            dst = merge_all(dst, frame_dst(stagefile_x, y, stagefile_w, graph_h, 255, frame_w, frame_h, {op = {80}}))
+        end
 		-- レーンカバー変更中は透過(緑数字が見えるようにするため)
 		local dst_default = deepcopy(dst)
 		for i, v in ipairs(dst_default) do
@@ -2589,83 +2730,83 @@ local function main(keysNumber)
 		}})
 	end
 	-- cleared lamp display
-	do
-		local text_size = 15
-		local text_align = 2
-		if is2P() then
-			text_align = 0
-		end
-		append_all(skin.text, {
-			{id = "text_MAX", font = "genshin_bold", size = text_size, align = text_align, constantText = "MAX"},
-			{id = "text_PERFECT", font = "genshin_bold", size = text_size, align = text_align, constantText = "PERFECT"},
-			{id = "text_FULLCOMBO", font = "genshin_bold", size = text_size, align = text_align, constantText = "FULLCOMBO"},
-			{id = "text_AUTOPLAY", font = "genshin_bold", size = text_size, align = text_align, constantText = "AUTOPLAY"},
-		})
+	-- do
+	-- 	local text_size = 15
+	-- 	local text_align = 2
+	-- 	if is2P() then
+	-- 		text_align = 0
+	-- 	end
+	-- 	append_all(skin.text, {
+	-- 		{id = "text_MAX", font = "genshin_bold", size = text_size, align = text_align, constantText = "MAX"},
+	-- 		{id = "text_PERFECT", font = "genshin_bold", size = text_size, align = text_align, constantText = "PERFECT"},
+	-- 		{id = "text_FULLCOMBO", font = "genshin_bold", size = text_size, align = text_align, constantText = "FULLCOMBO"},
+	-- 		{id = "text_AUTOPLAY", font = "genshin_bold", size = text_size, align = text_align, constantText = "AUTOPLAY"},
+	-- 	})
 
-		local line_x = geo.gauge.x local line_y = geo.lane.y - 8 local line_w = geo.gauge.w * 0.6 local line_h = 2
-		local text_x = line_x + line_w local text_y = line_y - text_size - 3
-		if is2P() then
-			line_x = geo.gauge.x + geo.gauge.w - line_w
-			text_x = line_x
-		end
-		local cycle = 80
-		local op_gr = 2242 local op_gd = 2243 local op_bd = 2244 local op_pr = 2245
-		local op_auto = 33
-		local auto_color = {{r = 200, g = 200, b = 200}, {a = 220}}
-		local max_color = {{r = 255, g = 255, b = 255}, {r = 255, g = 200, b = 100}}
-		local perfect_color = {{r = 100, g = 255, b = 255}, {r = 255, g = 255, b = 100}}
-		local fullcombo_color = {{r = 255, g = 255, b = 255}, {r = 100, g = 255, b = 255}}
-		local missed_color = {r = 200, g = 200, b = 0}
-		append_all(skin.destination, {
-			-- autoplay
-			{id = -111, op = {op_auto}, dst = {
-				merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, auto_color[1]),
-				merge_all({time = cycle}, auto_color[2])
-			}},
-			{id = "text_AUTOPLAY", op = {op_auto}, filter = 1, dst = {
-				merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, auto_color[1]),
-				merge_all({time = cycle}, auto_color[2])
-			}},
-			-- max
-			{id = -111, op = {-op_auto, -op_gr, -op_gd, -op_bd, -op_pr}, dst = {
-				merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, max_color[1]),
-				merge_all({time = cycle}, max_color[2])
-			}},
-			{id = "text_MAX", op = {-op_auto, -op_gr, -op_gd, -op_bd, -op_pr}, filter = 1, dst = {
-				merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, max_color[1]),
-				merge_all({time = cycle}, max_color[2])
-			}},
-			-- perfect
-			{id = -111, op = {op_gr, -op_gd, -op_bd, -op_pr}, dst = {
-				merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, perfect_color[1]),
-				merge_all({time = cycle}, perfect_color[2])
-			}},
-			{id = "text_PERFECT", op = {op_gr, -op_gd, -op_bd, -op_pr}, filter = 1, dst = {
-				merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, perfect_color[1]),
-				merge_all({time = cycle}, perfect_color[2])
-			}},
-			-- fullcombo
-			{id = -111, op = {op_gd, -op_bd, -op_pr}, dst = {
-				merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, fullcombo_color[1]),
-				merge_all({time = cycle}, fullcombo_color[2])
-			}},
-			{id = "text_FULLCOMBO", op = {op_gd, -op_bd, -op_pr}, filter = 1, dst = {
-				merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, fullcombo_color[1]),
-				merge_all({time = cycle}, fullcombo_color[2])
-			}},
-			-- missed
-			{id = -111, draw = function()
-				return main_state.option(op_bd) or main_state.option(op_pr)
-				end, dst = {
-					merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, missed_color),
-				}
-			},
-		})
-	end
+	-- 	local line_x = geo.gauge.x local line_y = geo.lane.y - 8 local line_w = geo.gauge.w * 0.6 local line_h = 2
+	-- 	local text_x = line_x + line_w local text_y = line_y - text_size - 3
+	-- 	if is2P() then
+	-- 		line_x = geo.gauge.x + geo.gauge.w - line_w
+	-- 		text_x = line_x
+	-- 	end
+	-- 	local cycle = 80
+	-- 	local op_gr = 2242 local op_gd = 2243 local op_bd = 2244 local op_pr = 2245
+	-- 	local op_auto = 33
+	-- 	local auto_color = {{r = 200, g = 200, b = 200}, {a = 220}}
+	-- 	local max_color = {{r = 255, g = 255, b = 255}, {r = 255, g = 200, b = 100}}
+	-- 	local perfect_color = {{r = 100, g = 255, b = 255}, {r = 255, g = 255, b = 100}}
+	-- 	local fullcombo_color = {{r = 255, g = 255, b = 255}, {r = 100, g = 255, b = 255}}
+	-- 	local missed_color = {r = 200, g = 200, b = 0}
+	-- 	append_all(skin.destination, {
+	-- 		-- autoplay
+	-- 		{id = -111, op = {op_auto}, dst = {
+	-- 			merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, auto_color[1]),
+	-- 			merge_all({time = cycle}, auto_color[2])
+	-- 		}},
+	-- 		{id = "text_AUTOPLAY", op = {op_auto}, filter = 1, dst = {
+	-- 			merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, auto_color[1]),
+	-- 			merge_all({time = cycle}, auto_color[2])
+	-- 		}},
+	-- 		-- max
+	-- 		{id = -111, op = {-op_auto, -op_gr, -op_gd, -op_bd, -op_pr}, dst = {
+	-- 			merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, max_color[1]),
+	-- 			merge_all({time = cycle}, max_color[2])
+	-- 		}},
+	-- 		{id = "text_MAX", op = {-op_auto, -op_gr, -op_gd, -op_bd, -op_pr}, filter = 1, dst = {
+	-- 			merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, max_color[1]),
+	-- 			merge_all({time = cycle}, max_color[2])
+	-- 		}},
+	-- 		-- perfect
+	-- 		{id = -111, op = {op_gr, -op_gd, -op_bd, -op_pr}, dst = {
+	-- 			merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, perfect_color[1]),
+	-- 			merge_all({time = cycle}, perfect_color[2])
+	-- 		}},
+	-- 		{id = "text_PERFECT", op = {op_gr, -op_gd, -op_bd, -op_pr}, filter = 1, dst = {
+	-- 			merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, perfect_color[1]),
+	-- 			merge_all({time = cycle}, perfect_color[2])
+	-- 		}},
+	-- 		-- fullcombo
+	-- 		{id = -111, op = {op_gd, -op_bd, -op_pr}, dst = {
+	-- 			merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, fullcombo_color[1]),
+	-- 			merge_all({time = cycle}, fullcombo_color[2])
+	-- 		}},
+	-- 		{id = "text_FULLCOMBO", op = {op_gd, -op_bd, -op_pr}, filter = 1, dst = {
+	-- 			merge_all({x = text_x, y = text_y, w = text_size, h = text_size}, fullcombo_color[1]),
+	-- 			merge_all({time = cycle}, fullcombo_color[2])
+	-- 		}},
+	-- 		-- missed
+	-- 		{id = -111, draw = function()
+	-- 			return main_state.option(op_bd) or main_state.option(op_pr)
+	-- 			end, dst = {
+	-- 				merge_all({x = line_x, y = line_y, w = line_w, h = line_h}, missed_color),
+	-- 			}
+	-- 		},
+	-- 	})
+	-- end
 	-- score
 	do
 		table.insert(skin.value,
-			number({id = "exscore", src = "src_number_newtown", divx = 10, digit = 5, ref = 71})
+			number({id = "exscore", src = "src_number_newtown", divx = 11, digit = 4, zeropadding = 1, padding = 1, ref = 71})
 		)
 		local image_w = 430 local image_h = 70
 		table.insert(skin.image,
@@ -2679,7 +2820,7 @@ local function main(keysNumber)
 		}})
 		local num_size = 20
 		table.insert(skin.destination, {id = "exscore", dst = {
-			{x = x + geo.gauge.w * 0.5 - num_size * 6, y = y, w = num_size, h = num_size},
+			{x = x + geo.gauge.w * 0.5 - num_size * 5, y = y, w = num_size, h = num_size},
 		}})
 	end
 	-- hispeed

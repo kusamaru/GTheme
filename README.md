@@ -31,6 +31,9 @@ images: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
   Licensed under CC0 1.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/)
 - Newtown (https://fontmeme.com/jfont/newtown-font/)  
   Public Domain
+- Nemoy (https://github.com/noirblancrouge/Nemoy)
+  Licensed under SIL Open Font License 1.1 (http://scripts.sil.org/OFL) 
+  © 2023 The Nemoy Project Authors
 
 ### Images
 - Explosion - 8556 (https://pixabay.com/videos/id-8556/)
